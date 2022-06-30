@@ -22,7 +22,7 @@ If invoice cannot be found, returns 404.
 Returns {invoice: {id, amt, paid, add_date, paid_date,
             company: {code, name, description}} */
 router.get("/:id", async function (req, res) {
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
   const invoiceResults = await db.query(
     `SELECT id, amt, paid, add_date, paid_date, comp_code AS company
            FROM invoices
@@ -48,7 +48,8 @@ router.get("/:id", async function (req, res) {
 
 Needs to be passed in JSON body of: {comp_code, amt}
 
-Returns: {invoice: {id, comp_code, amt, paid, add_date, paid_date}} */
+Returns: {invoice: {id, comp_code, amt, paid, add_date, paid_date}}
+or 404 code if no company exists */
 router.post("/", async function (req, res) {
   const code = req.body.comp_code;
   const companyResults = await db.query(
@@ -62,7 +63,7 @@ router.post("/", async function (req, res) {
     `INSERT INTO invoices (comp_code, amt)
          VALUES ($1, $2)
          RETURNING id, comp_code, amt, paid, add_date, paid_date`,
-    [code, req.body.amt]);
+    [code, Number(req.body.amt)]);
   const invoice = results.rows[0];
 
   return res.status(201).json({ invoice });
@@ -78,16 +79,16 @@ Returns: {invoice: {id, comp_code, amt, paid, add_date, paid_date}} */
 router.put("/:id", async function (req, res) {
   if ("id" in req.body) throw new BadRequestError("Not allowed");
 
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
   const results = await db.query(
     `UPDATE invoices
          SET amt=$2
          WHERE id = $1
          RETURNING id, comp_code, amt, paid, add_date, paid_date`,
-    [id, req.body.amt]);
+    [id, Number(req.body.amt)]);
   const invoice = results.rows[0];
 
-  if (!invoice) throw new NotFoundError(`No matching company: ${id}`);
+  if (!invoice) throw new NotFoundError(`No matching invoice: ${id}`);
   return res.json({ invoice });
 });
 
@@ -99,7 +100,7 @@ If invoice cannot be found, returns a 404.
 Returns: {status: "deleted"} */
 
 router.delete("/:id", async function (req, res) {
-  const id = req.params.id;
+  const id = parseInt(req.params.id);
   const results = await db.query(
     `DELETE FROM invoices
       WHERE id = $1
