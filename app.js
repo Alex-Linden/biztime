@@ -2,10 +2,17 @@
 
 const express = require("express");
 const { NotFoundError } = require("./expressError");
+const companyRoutes = require("./routes/companies")
 
 const app = express();
 
 app.use(express.json());
+
+// process traditional form data => req.body
+app.use(express.urlencoded({ extended: true }));
+
+
+app.use("/companies", companyRoutes)
 
 
 /** 404 handler: matches unmatched routes; raises NotFoundError. */
