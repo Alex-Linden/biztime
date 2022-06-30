@@ -10,8 +10,8 @@ const { Client } = require("pg");
 
 //LINUX SET UP
 const DB_URI = process.env.NODE_ENV === "test"
-    ? "postgresql://localhost/biztime_test"
-    : "postgresql://localhost/biztime";
+    ? "postgresql://robinnsheen:pgpassword@localhost/biztime_test"
+    : "postgresql://robinnsheen:pgpassword@localhost/biztime";
 
 let db = new Client({
   connectionString: DB_URI

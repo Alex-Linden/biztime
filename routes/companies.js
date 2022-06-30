@@ -17,17 +17,27 @@ router.get("/", async function (req, res) {
 
 
 
-/** Return obj of company: {company: {code, name, description}}
+/** Return obj of company:
+ *  {company: {code, name, description,
+ *      invoices: [id, ...]}}
 
-If the company cannot be found, return a 404 status response. */
+If the company given cannot be found, this should return a 404 status response. */
 router.get("/:code", async function (req, res) {
   const code = req.params.code;
+
   const results = await db.query(
     `SELECT code, name, description
            FROM companies
            WHERE code = $1`,
     [code]);
   const company = results.rows[0];
+
+  const invoicesResults = await db.query(
+    `SELECT id
+           FROM invoices
+           WHERE comp_code = $1`,
+    [code]);
+  company.invoices = invoicesResults.rows.map(r => r.id);
 
   if (!company) throw new NotFoundError(`No matching company: ${code}`);
   return res.json({ company });
