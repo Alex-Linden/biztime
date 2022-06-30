@@ -1,8 +1,10 @@
+"use strict";
+
 const express = require("express");
 const db = require("../db");
 const router = express.Router();
 
-const { NotFoundError } = require("../expressError");
+const { NotFoundError, BadRequestError } = require("../expressError");
 
 /** Returns list of companies, like {companies: [{code, name}, ...]} */
 router.get("/", async function (req, res) {
@@ -57,7 +59,7 @@ Needs to be given JSON like: {name, description}
 
 Returns update company object: {company: {code, name, description}} */
 router.put("/:code", async function (req, res) {
-  //if ("code" in req.body) throw new BadRequestError("Not allowed");
+  if ("code" in req.body) throw new BadRequestError("Not allowed");
 
   const code = req.params.code;
   const results = await db.query(
@@ -81,7 +83,9 @@ Returns {status: "deleted"} */
 router.delete("/:code", async function (req, res) {
   const code = req.params.code;
   const results = await db.query(
-    "DELETE FROM companies WHERE code = $1 RETURNING code", [code]);
+    `DELETE FROM companies
+      WHERE code = $1
+      RETURNING code`, [code]);
   const company = results.rows[0];
 
   if (!company) throw new NotFoundError(`No matching company: ${code}`);
