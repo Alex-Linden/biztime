@@ -73,20 +73,29 @@ router.post("/", async function (req, res) {
 
 If invoice cannot be found, returns a 404.
 
-Needs to be passed in a JSON body of {amt}
+Needs to be passed in a JSON body of {amt, paid}
 
 Returns: {invoice: {id, comp_code, amt, paid, add_date, paid_date}} */
 router.put("/:id", async function (req, res) {
   if ("id" in req.body) throw new BadRequestError("Not allowed");
+  let paidStatus = `paid = false, paid_date = null`;
 
   const id = parseInt(req.params.id);
+  const date = new Date();
+  if (req.body.paid) {
+    paidStatus = `paid=true, paid_date=CURRENT_DATE`
+  }
+
   const results = await db.query(
     `UPDATE invoices
-         SET amt=$2
+         SET amt=$2, ${paidStatus}
          WHERE id = $1
          RETURNING id, comp_code, amt, paid, add_date, paid_date`,
     [id, Number(req.body.amt)]);
+
   const invoice = results.rows[0];
+
+
 
   if (!invoice) throw new NotFoundError(`No matching invoice: ${id}`);
   return res.json({ invoice });

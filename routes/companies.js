@@ -3,6 +3,7 @@
 const express = require("express");
 const db = require("../db");
 const router = express.Router();
+const slugify = require("slugify");
 
 const { NotFoundError, BadRequestError } = require("../expressError");
 
@@ -46,15 +47,20 @@ router.get("/:code", async function (req, res) {
 
 /**Adds a company.
 
-Needs to be given JSON like: {code, name, description}
+Needs to be given JSON like: {name, description}
 
 Returns obj of new company: {company: {code, name, description}} */
 router.post("/", async function (req, res) {
+  const code = slugify(req.body.name, {
+    lower: true,
+    remove: /[*+~.()'"!:@]/g
+  });
+
   const results = await db.query(
     `INSERT INTO companies (code, name, description)
          VALUES ($1, $2, $3)
          RETURNING code, name, description`,
-    [req.body.code, req.body.name, req.body.description]);
+    [code, req.body.name, req.body.description]);
   const company = results.rows[0];
 
   return res.status(201).json({ company });
@@ -70,7 +76,7 @@ Needs to be given JSON like: {name, description}
 Returns update company object: {company: {code, name, description}} */
 router.put("/:code", async function (req, res) {
   if ("code" in req.body) throw new BadRequestError("Not allowed");
-
+  //TODO: if req.body === undefined or code
   const code = req.params.code;
   const results = await db.query(
     `UPDATE companies
